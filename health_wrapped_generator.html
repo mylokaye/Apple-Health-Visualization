@@ -494,8 +494,9 @@
                 <!-- Distance -->
                 <div class="stat-card bento-item-2">
                     <div class="stat-label">Distance Traveled</div>
-                    <div class="stat-value highlight-2" id="wrappedMiles">0</div>
+                    <div class="stat-value highlight-2"><span id="wrappedMiles">0</span> <span class="stat-unit">miles</span></div>
                     <div class="stat-unit" id="wrappedKm">0 km</div>
+                    <div class="stat-unit" id="moonComparison" style="margin-top: 8px; opacity: 0.7; font-size: 14px;"></div>
                 </div>
 
                 <!-- Daily Average -->
@@ -881,6 +882,12 @@
                 ? `That's climbing the Burj Khalifa ${burjKhalifaTrips}x!`
                 : `${Math.round(burjKhalifaTrips * 100)}% of the Burj Khalifa`;
 
+            // Calculate moon comparison (moon circumference = 10,900 km)
+            const moonPercentage = ((totalKm / 10900) * 100).toFixed(1);
+            const moonComparison = moonPercentage >= 100
+                ? `That's ${(moonPercentage / 100).toFixed(1)}x around the moon!`
+                : `${moonPercentage}% of the way around the moon`;
+
             // Calculate fitness age if age provided
             let fitnessAgeData = null;
             if (state.userAge && stats.heartRates.length > 0) {
@@ -891,6 +898,7 @@
             document.getElementById('wrappedSteps').textContent = totalStepsM + 'M';
             document.getElementById('wrappedMiles').textContent = totalMiles.toLocaleString();
             document.getElementById('wrappedKm').textContent = totalKm.toLocaleString() + ' km';
+            document.getElementById('moonComparison').textContent = moonComparison;
             document.getElementById('wrappedAvgSteps').textContent = avgDailySteps.toLocaleString();
             document.getElementById('wrappedStepsMessage').textContent = avgDailySteps > 10000 ? 'Above recommended 10K!' : 'Keep it up!';
             document.getElementById('wrappedExercise').textContent = exerciseHours;
