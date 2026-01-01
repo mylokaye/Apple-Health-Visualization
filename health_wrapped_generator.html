@@ -775,7 +775,17 @@
 
                         // Only add if duration is valid (not NaN and positive)
                         if (!isNaN(durationMinutes) && durationMinutes > 0) {
-                            if (value && value.includes('Asleep')) {
+                            // Check for both string format (Asleep) and numeric format (value >= 1 means asleep states)
+                            // Apple Health values: 0=InBed, 1=Asleep/Unspecified, 2=Awake, 3=Core, 4=Deep, 5=REM
+                            const isAsleep = (value && (
+                                value.includes('Asleep') ||
+                                value.includes('Core') ||
+                                value.includes('Deep') ||
+                                value.includes('REM') ||
+                                (parseInt(value) >= 1 && parseInt(value) !== 2) // 1,3,4,5 are sleep states, 2 is awake
+                            ));
+
+                            if (isAsleep) {
                                 state.stats.sleepAsleep += durationMinutes;
                             }
                             state.stats.sleepInBed += durationMinutes;
