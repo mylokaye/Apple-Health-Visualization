@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Apple Health Wrapped 2025 Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -345,6 +346,41 @@
             background: rgba(255, 255, 255, 0.2);
             transform: translateX(-4px);
         }
+
+        /* Charts View */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00f5a0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
     </style>
 </head>
 <body>
@@ -482,7 +518,57 @@
             </div>
 
             <div style="text-align: center; margin-top: 40px;">
-                <button class="btn" id="downloadCsvBtn2">📥 Download CSV</button>
+                <button class="btn btn-large" id="exploreDataBtn">📊 Explore Data</button>
+                <br>
+                <button class="btn btn-secondary" id="downloadCsvBtn2">📥 Download CSV</button>
+            </div>
+        </div>
+
+        <!-- Charts View -->
+        <div id="chartsView" class="view">
+            <button class="back-btn" id="backToWrappedBtn">← Back to Wrapped</button>
+
+            <div class="header">
+                <div class="year">2025</div>
+                <div class="subtitle">DATA EXPLORER</div>
+            </div>
+
+            <div class="charts-grid">
+                <!-- Steps Over Time -->
+                <div class="chart-card">
+                    <div class="chart-title">Daily Steps Over Time</div>
+                    <div class="chart-container">
+                        <canvas id="stepsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Monthly Totals -->
+                <div class="chart-card">
+                    <div class="chart-title">Monthly Activity Summary</div>
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Heart Rate Trends -->
+                <div class="chart-card">
+                    <div class="chart-title">Heart Rate Distribution</div>
+                    <div class="chart-container">
+                        <canvas id="heartRateChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Activity by Day of Week -->
+                <div class="chart-card">
+                    <div class="chart-title">Activity by Day of Week</div>
+                    <div class="chart-container">
+                        <canvas id="weekdayChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+                <button class="btn btn-secondary" id="downloadCsvBtn3">📥 Download CSV</button>
             </div>
         </div>
     </div>
@@ -721,11 +807,249 @@
             showView('wrappedView');
         }
 
+        // Prepare chart data and render charts
+        function showChartsView() {
+            prepareChartsData();
+            renderCharts();
+            showView('chartsView');
+        }
+
+        // Prepare data for charts
+        function prepareChartsData() {
+            const stats = state.stats;
+
+            // Process data by month
+            state.chartData = {
+                dailySteps: {},
+                monthlySteps: {},
+                monthlyDistance: {},
+                weekdaySteps: {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0},
+                weekdayCounts: {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
+            };
+
+            // Process steps by day and aggregate
+            Object.entries(stats.stepsByDay).forEach(([date, steps]) => {
+                const d = new Date(date);
+                const month = d.toLocaleString('default', { month: 'short' });
+                const weekday = d.getDay();
+
+                state.chartData.dailySteps[date] = steps;
+                state.chartData.monthlySteps[month] = (state.chartData.monthlySteps[month] || 0) + steps;
+                state.chartData.weekdaySteps[weekday] += steps;
+                state.chartData.weekdayCounts[weekday]++;
+            });
+
+            // Process distance by month
+            state.csvData.filter(r => r.type === 'DistanceWalkingRunning').forEach(record => {
+                const d = new Date(record.startDate);
+                const month = d.toLocaleString('default', { month: 'short' });
+                state.chartData.monthlyDistance[month] = (state.chartData.monthlyDistance[month] || 0) + parseFloat(record.value);
+            });
+        }
+
+        // Render all charts
+        function renderCharts() {
+            // Configure Chart.js defaults for dark theme
+            Chart.defaults.color = 'rgba(255, 255, 255, 0.8)';
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+            renderStepsChart();
+            renderMonthlyChart();
+            renderHeartRateChart();
+            renderWeekdayChart();
+        }
+
+        // Daily Steps Line Chart
+        function renderStepsChart() {
+            const ctx = document.getElementById('stepsChart').getContext('2d');
+            const dailySteps = state.chartData.dailySteps;
+            const sortedDates = Object.keys(dailySteps).sort();
+
+            // Sample data (show every 7th day to avoid clutter)
+            const sampledDates = sortedDates.filter((_, i) => i % 7 === 0);
+            const sampledSteps = sampledDates.map(d => dailySteps[d]);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sampledDates.map(d => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })),
+                    datasets: [{
+                        label: 'Steps',
+                        data: sampledSteps,
+                        borderColor: '#00f5a0',
+                        backgroundColor: 'rgba(0, 245, 160, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Monthly Bar Chart
+        function renderMonthlyChart() {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthlySteps = months.map(m => state.chartData.monthlySteps[m] || 0);
+            const monthlyDistance = months.map(m => Math.round((state.chartData.monthlyDistance[m] || 0) * 1.60934)); // Convert to km
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Steps',
+                        data: monthlySteps,
+                        backgroundColor: 'rgba(0, 245, 160, 0.6)',
+                        borderColor: '#00f5a0',
+                        borderWidth: 2,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'Distance (km)',
+                        data: monthlyDistance,
+                        backgroundColor: 'rgba(0, 217, 245, 0.6)',
+                        borderColor: '#00d9f5',
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            ticks: {
+                                callback: value => (value / 1000).toFixed(0) + 'K'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            grid: { drawOnChartArea: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Heart Rate Distribution
+        function renderHeartRateChart() {
+            const ctx = document.getElementById('heartRateChart').getContext('2d');
+            const heartRates = state.stats.heartRates;
+
+            // Create bins for histogram
+            const bins = {};
+            heartRates.forEach(hr => {
+                const bin = Math.floor(hr / 10) * 10;
+                bins[bin] = (bins[bin] || 0) + 1;
+            });
+
+            const sortedBins = Object.keys(bins).sort((a, b) => a - b);
+            const labels = sortedBins.map(b => `${b}-${parseInt(b) + 9}`);
+            const data = sortedBins.map(b => bins[b]);
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: data,
+                        backgroundColor: 'rgba(165, 55, 253, 0.6)',
+                        borderColor: '#a537fd',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => value.toLocaleString()
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Heart Rate (bpm)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Weekday Radar Chart
+        function renderWeekdayChart() {
+            const ctx = document.getElementById('weekdayChart').getContext('2d');
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const avgSteps = days.map((_, i) => {
+                const count = state.chartData.weekdayCounts[i];
+                return count > 0 ? Math.round(state.chartData.weekdaySteps[i] / count) : 0;
+            });
+
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: days,
+                    datasets: [{
+                        label: 'Avg Steps',
+                        data: avgSteps,
+                        borderColor: '#ffd93d',
+                        backgroundColor: 'rgba(255, 217, 61, 0.2)',
+                        pointBackgroundColor: '#ffd93d',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#ffd93d'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => (value / 1000).toFixed(0) + 'K'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
         // Event listeners
         document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
         document.getElementById('downloadCsvBtn2').addEventListener('click', downloadCSV);
+        document.getElementById('downloadCsvBtn3').addEventListener('click', downloadCSV);
         document.getElementById('showWrappedBtn').addEventListener('click', showWrapped);
+        document.getElementById('exploreDataBtn').addEventListener('click', showChartsView);
         document.getElementById('backBtn').addEventListener('click', () => showView('resultsView'));
+        document.getElementById('backToWrappedBtn').addEventListener('click', () => showView('wrappedView'));
     </script>
 </body>
 </html>
