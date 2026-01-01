@@ -773,10 +773,13 @@
                         const end = new Date(endDate);
                         const durationMinutes = (end - start) / (1000 * 60);
 
-                        if (value && value.includes('Asleep')) {
-                            state.stats.sleepAsleep += durationMinutes;
+                        // Only add if duration is valid (not NaN and positive)
+                        if (!isNaN(durationMinutes) && durationMinutes > 0) {
+                            if (value && value.includes('Asleep')) {
+                                state.stats.sleepAsleep += durationMinutes;
+                            }
+                            state.stats.sleepInBed += durationMinutes;
                         }
-                        state.stats.sleepInBed += durationMinutes;
                     }
                     break;
             }
@@ -891,7 +894,7 @@
 
             const flightsClimbed = Math.round(stats.totalFlights);
             const standingDays = (stats.totalStandTime / 1440).toFixed(1); // Convert minutes to days
-            const sleepDays = (stats.sleepAsleep / 1440).toFixed(1); // Convert minutes to days
+            const sleepDays = stats.sleepAsleep > 0 ? (stats.sleepAsleep / 1440).toFixed(1) : '0.0'; // Convert minutes to days
 
             // Calculate Burj Khalifa comparison (163 flights from bottom to top)
             const burjKhalifaTrips = (flightsClimbed / 163).toFixed(1);
