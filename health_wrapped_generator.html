@@ -481,18 +481,18 @@
                     <div class="stat-unit" id="wrappedStepsMessage">Keep moving!</div>
                 </div>
 
-                <!-- Avg Heart Rate -->
+                <!-- Flights Climbed -->
                 <div class="stat-card bento-item-4">
-                    <div class="stat-label">Avg Heart Rate</div>
-                    <div class="stat-value highlight-3" id="wrappedAvgHR">0</div>
-                    <div class="stat-unit">bpm</div>
+                    <div class="stat-label">Flights Climbed</div>
+                    <div class="stat-value highlight-3" id="wrappedFlights">0</div>
+                    <div class="stat-unit">flights</div>
                 </div>
 
-                <!-- Peak Heart Rate -->
+                <!-- Time Standing -->
                 <div class="stat-card bento-item-5">
-                    <div class="stat-label">Peak HR</div>
-                    <div class="stat-value highlight-4" id="wrappedMaxHR">0</div>
-                    <div class="stat-unit">bpm</div>
+                    <div class="stat-label">Time Standing</div>
+                    <div class="stat-value highlight-4" id="wrappedStanding">0</div>
+                    <div class="stat-unit">hours</div>
                 </div>
 
                 <!-- Exercise & Calories -->
@@ -517,58 +517,41 @@
                 </div>
             </div>
 
+            <!-- Charts Section -->
+            <div style="margin-top: 60px;">
+                <div class="header">
+                    <div class="subtitle">DATA EXPLORER</div>
+                </div>
+
+                <div class="charts-grid">
+                    <!-- Steps Over Time -->
+                    <div class="chart-card">
+                        <div class="chart-title">Daily Steps Over Time</div>
+                        <div class="chart-container">
+                            <canvas id="stepsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Totals -->
+                    <div class="chart-card">
+                        <div class="chart-title">Monthly Activity Summary</div>
+                        <div class="chart-container">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Activity by Day of Week -->
+                    <div class="chart-card">
+                        <div class="chart-title">Activity by Day of Week</div>
+                        <div class="chart-container">
+                            <canvas id="weekdayChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div style="text-align: center; margin-top: 40px;">
-                <button class="btn btn-large" id="exploreDataBtn">📊 Explore Data</button>
-                <br>
                 <button class="btn btn-secondary" id="downloadCsvBtn2">📥 Download CSV</button>
-            </div>
-        </div>
-
-        <!-- Charts View -->
-        <div id="chartsView" class="view">
-            <button class="back-btn" id="backToWrappedBtn">← Back to Wrapped</button>
-
-            <div class="header">
-                <div class="year">2025</div>
-                <div class="subtitle">DATA EXPLORER</div>
-            </div>
-
-            <div class="charts-grid">
-                <!-- Steps Over Time -->
-                <div class="chart-card">
-                    <div class="chart-title">Daily Steps Over Time</div>
-                    <div class="chart-container">
-                        <canvas id="stepsChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Monthly Totals -->
-                <div class="chart-card">
-                    <div class="chart-title">Monthly Activity Summary</div>
-                    <div class="chart-container">
-                        <canvas id="monthlyChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Heart Rate Trends -->
-                <div class="chart-card">
-                    <div class="chart-title">Heart Rate Distribution</div>
-                    <div class="chart-container">
-                        <canvas id="heartRateChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Activity by Day of Week -->
-                <div class="chart-card">
-                    <div class="chart-title">Activity by Day of Week</div>
-                    <div class="chart-container">
-                        <canvas id="weekdayChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <div style="text-align: center; margin-top: 40px;">
-                <button class="btn btn-secondary" id="downloadCsvBtn3">📥 Download CSV</button>
             </div>
         </div>
     </div>
@@ -583,9 +566,12 @@
                 totalSteps: 0,
                 stepsByDay: {},
                 totalDistance: 0,
-                heartRates: [],
                 totalExercise: 0,
                 totalCalories: 0,
+                totalFlights: 0,
+                totalStandTime: 0,
+                sleepInBed: 0,
+                sleepAsleep: 0,
                 recordsProcessed: 0,
                 recordsFound: 0
             }
@@ -648,9 +634,12 @@
                 totalSteps: 0,
                 stepsByDay: {},
                 totalDistance: 0,
-                heartRates: [],
                 totalExercise: 0,
                 totalCalories: 0,
+                totalFlights: 0,
+                totalStandTime: 0,
+                sleepInBed: 0,
+                sleepAsleep: 0,
                 recordsProcessed: 0,
                 recordsFound: 0
             };
@@ -732,14 +721,24 @@
                 case 'DistanceWalkingRunning':
                     state.stats.totalDistance += numValue;
                     break;
-                case 'HeartRate':
-                    state.stats.heartRates.push(numValue);
-                    break;
                 case 'AppleExerciseTime':
                     state.stats.totalExercise += numValue;
                     break;
                 case 'ActiveEnergyBurned':
                     state.stats.totalCalories += numValue;
+                    break;
+                case 'FlightsClimbed':
+                    state.stats.totalFlights += numValue;
+                    break;
+                case 'AppleStandTime':
+                    state.stats.totalStandTime += numValue;
+                    break;
+                case 'SleepAnalysis':
+                    // Note: Sleep data might not have units, so may be filtered out
+                    if (value.includes('Asleep')) {
+                        state.stats.sleepAsleep += numValue;
+                    }
+                    state.stats.sleepInBed += numValue;
                     break;
             }
         }
@@ -784,13 +783,13 @@
             const totalStepsM = (stats.totalSteps / 1000000).toFixed(2);
             const totalMiles = Math.round(stats.totalDistance);
             const totalKm = Math.round(stats.totalDistance * 1.60934);
-            const avgHR = stats.heartRates.length > 0 ? Math.round(stats.heartRates.reduce((a, b) => a + b, 0) / stats.heartRates.length) : 0;
-            const maxHR = stats.heartRates.length > 0 ? Math.round(Math.max(...stats.heartRates)) : 0;
             const exerciseHours = Math.round(stats.totalExercise / 60);
             const caloriesK = Math.round(stats.totalCalories / 1000) + 'K';
             const dailySteps = Object.values(stats.stepsByDay);
             const avgDailySteps = dailySteps.length > 0 ? Math.round(dailySteps.reduce((a, b) => a + b, 0) / dailySteps.length) : 0;
             const maxDailySteps = dailySteps.length > 0 ? Math.round(Math.max(...dailySteps)) : 0;
+            const flightsClimbed = Math.round(stats.totalFlights);
+            const standingHours = Math.round(stats.totalStandTime / 60);
 
             // Update wrapped view
             document.getElementById('wrappedSteps').textContent = totalStepsM + 'M';
@@ -798,20 +797,17 @@
             document.getElementById('wrappedKm').textContent = totalKm.toLocaleString() + ' km';
             document.getElementById('wrappedAvgSteps').textContent = avgDailySteps.toLocaleString();
             document.getElementById('wrappedStepsMessage').textContent = avgDailySteps > 10000 ? 'Above recommended 10K!' : 'Keep it up!';
-            document.getElementById('wrappedAvgHR').textContent = avgHR;
-            document.getElementById('wrappedMaxHR').textContent = maxHR;
             document.getElementById('wrappedExercise').textContent = exerciseHours;
             document.getElementById('wrappedCalories').textContent = caloriesK;
             document.getElementById('wrappedBestDay').textContent = maxDailySteps.toLocaleString();
+            document.getElementById('wrappedFlights').textContent = flightsClimbed.toLocaleString();
+            document.getElementById('wrappedStanding').textContent = standingHours.toLocaleString();
 
-            showView('wrappedView');
-        }
-
-        // Prepare chart data and render charts
-        function showChartsView() {
+            // Prepare and render charts
             prepareChartsData();
             renderCharts();
-            showView('chartsView');
+
+            showView('wrappedView');
         }
 
         // Prepare data for charts
@@ -855,7 +851,6 @@
 
             renderStepsChart();
             renderMonthlyChart();
-            renderHeartRateChart();
             renderWeekdayChart();
         }
 
@@ -948,58 +943,6 @@
             });
         }
 
-        // Heart Rate Distribution
-        function renderHeartRateChart() {
-            const ctx = document.getElementById('heartRateChart').getContext('2d');
-            const heartRates = state.stats.heartRates;
-
-            // Create bins for histogram
-            const bins = {};
-            heartRates.forEach(hr => {
-                const bin = Math.floor(hr / 10) * 10;
-                bins[bin] = (bins[bin] || 0) + 1;
-            });
-
-            const sortedBins = Object.keys(bins).sort((a, b) => a - b);
-            const labels = sortedBins.map(b => `${b}-${parseInt(b) + 9}`);
-            const data = sortedBins.map(b => bins[b]);
-
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Frequency',
-                        data: data,
-                        backgroundColor: 'rgba(165, 55, 253, 0.6)',
-                        borderColor: '#a537fd',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: value => value.toLocaleString()
-                            }
-                        },
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Heart Rate (bpm)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
         // Weekday Radar Chart
         function renderWeekdayChart() {
             const ctx = document.getElementById('weekdayChart').getContext('2d');
@@ -1045,11 +988,8 @@
         // Event listeners
         document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
         document.getElementById('downloadCsvBtn2').addEventListener('click', downloadCSV);
-        document.getElementById('downloadCsvBtn3').addEventListener('click', downloadCSV);
         document.getElementById('showWrappedBtn').addEventListener('click', showWrapped);
-        document.getElementById('exploreDataBtn').addEventListener('click', showChartsView);
         document.getElementById('backBtn').addEventListener('click', () => showView('resultsView'));
-        document.getElementById('backToWrappedBtn').addEventListener('click', () => showView('wrappedView'));
     </script>
 </body>
 </html>
