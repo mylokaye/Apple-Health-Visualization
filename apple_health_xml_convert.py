@@ -81,6 +81,12 @@ def xml_to_csv(file_path):
                 elem.clear()
                 continue
 
+            # Skip records with empty or missing unit field
+            unit = child_attrib.get('unit', '')
+            if not unit:
+                elem.clear()
+                continue
+
             # Only keep the columns we need - direct dict comprehension
             filtered_attrib = {k: child_attrib[k] for k in columns_to_keep if k in child_attrib}
 
