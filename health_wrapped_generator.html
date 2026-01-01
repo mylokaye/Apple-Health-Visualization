@@ -208,6 +208,8 @@
             .bento-item-5 { grid-column: span 1; grid-row: span 2; }
             .bento-item-6 { grid-column: span 2; grid-row: span 2; }
             .bento-item-7 { grid-column: span 2; grid-row: span 1; }
+            .bento-item-8 { grid-column: span 1; grid-row: span 2; }
+            .bento-item-9 { grid-column: span 1; grid-row: span 2; }
         }
 
         .stat-card {
@@ -521,11 +523,11 @@
                     <div class="stat-unit" id="fitnessAgeMessage">years old</div>
                 </div>
 
-                <!-- Time Standing (shown if no fitness age) -->
-                <div class="stat-card bento-item-5" id="standingCard">
+                <!-- Time Standing (always shown) -->
+                <div class="stat-card bento-item-9">
                     <div class="stat-label">Time Standing</div>
-                    <div class="stat-value highlight-4" id="wrappedStanding">0</div>
-                    <div class="stat-unit">hours</div>
+                    <div class="stat-value highlight-1" id="wrappedStanding">0</div>
+                    <div class="stat-unit">Days stood up</div>
                 </div>
 
                 <!-- Exercise & Calories -->
@@ -547,6 +549,13 @@
                     <div class="stat-label">Your Best Day</div>
                     <div class="stat-value highlight-3" id="wrappedBestDayDate" style="font-size: clamp(24px, 4vw, 48px);">-</div>
                     <div class="stat-unit" id="wrappedBestDaySteps" style="font-size: clamp(20px, 3vw, 32px); margin-top: 8px;">0 Steps</div>
+                </div>
+
+                <!-- Time Asleep -->
+                <div class="stat-card bento-item-8">
+                    <div class="stat-label">Time Asleep</div>
+                    <div class="stat-value highlight-5" id="wrappedAsleep">0</div>
+                    <div class="stat-unit">Days asleep</div>
                 </div>
             </div>
 
@@ -893,7 +902,8 @@
             }
 
             const flightsClimbed = Math.round(stats.totalFlights);
-            const standingHours = Math.round(stats.totalStandTime / 60);
+            const standingDays = (stats.totalStandTime / 1440).toFixed(1); // Convert minutes to days
+            const sleepDays = (stats.sleepAsleep / 1440).toFixed(1); // Convert minutes to days
 
             // Calculate Burj Khalifa comparison (163 flights from bottom to top)
             const burjKhalifaTrips = (flightsClimbed / 163).toFixed(1);
@@ -926,12 +936,12 @@
             document.getElementById('wrappedBestDaySteps').textContent = `${Math.round(maxDailySteps).toLocaleString()} Steps`;
             document.getElementById('wrappedFlights').textContent = flightsClimbed.toLocaleString();
             document.getElementById('burjKhalifaComparison').textContent = burjComparison;
-            document.getElementById('wrappedStanding').textContent = standingHours.toLocaleString();
+            document.getElementById('wrappedStanding').textContent = standingDays;
+            document.getElementById('wrappedAsleep').textContent = sleepDays;
 
-            // Show/hide fitness age vs standing card
+            // Show/hide fitness age card
             if (fitnessAgeData) {
                 document.getElementById('fitnessAgeCard').style.display = 'flex';
-                document.getElementById('standingCard').style.display = 'none';
                 document.getElementById('wrappedFitnessAge').textContent = fitnessAgeData.fitnessAge;
 
                 const diff = fitnessAgeData.difference;
@@ -946,7 +956,6 @@
                 document.getElementById('fitnessAgeMessage').textContent = message;
             } else {
                 document.getElementById('fitnessAgeCard').style.display = 'none';
-                document.getElementById('standingCard').style.display = 'flex';
             }
 
             // Prepare and render charts
