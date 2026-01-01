@@ -442,6 +442,30 @@
                     ✅ Successfully processed <span class="stats-number" id="finalRecordCount">0</span> health records from 2025
                 </div>
 
+                <div style="margin: 30px 0; text-align: center;">
+                    <div class="stats-text" style="margin-bottom: 15px;">For personalized fitness age calculation:</div>
+                    <div style="display: flex; gap: 15px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                        <div>
+                            <label style="color: rgba(255,255,255,0.8); margin-right: 10px;">Your Age:</label>
+                            <input type="number" id="userAge" min="18" max="100" placeholder="25"
+                                   style="padding: 10px; border-radius: 8px; border: 2px solid rgba(0,245,160,0.3);
+                                          background: rgba(255,255,255,0.1); color: white; width: 80px; font-size: 16px;">
+                        </div>
+                        <div>
+                            <label style="color: rgba(255,255,255,0.8); margin-right: 10px;">Gender:</label>
+                            <select id="userGender"
+                                    style="padding: 10px; border-radius: 8px; border: 2px solid rgba(0,245,160,0.3);
+                                           background: rgba(255,255,255,0.1); color: white; font-size: 16px;">
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; font-size: 14px; color: rgba(255,255,255,0.5);">
+                        (Optional - used to calculate your fitness age)
+                    </div>
+                </div>
+
                 <div class="button-group">
                     <button class="btn" id="downloadCsvBtn">📥 Download CSV</button>
                     <br>
@@ -486,10 +510,18 @@
                     <div class="stat-label">Flights Climbed</div>
                     <div class="stat-value highlight-3" id="wrappedFlights">0</div>
                     <div class="stat-unit">flights</div>
+                    <div class="stat-unit" id="burjKhalifaComparison" style="margin-top: 8px; opacity: 0.7; font-size: 14px;"></div>
                 </div>
 
-                <!-- Time Standing -->
-                <div class="stat-card bento-item-5">
+                <!-- Fitness Age -->
+                <div class="stat-card bento-item-5" id="fitnessAgeCard" style="display: none;">
+                    <div class="stat-label">Fitness Age</div>
+                    <div class="stat-value highlight-4" id="wrappedFitnessAge">-</div>
+                    <div class="stat-unit" id="fitnessAgeMessage">years old</div>
+                </div>
+
+                <!-- Time Standing (shown if no fitness age) -->
+                <div class="stat-card bento-item-5" id="standingCard">
                     <div class="stat-label">Time Standing</div>
                     <div class="stat-value highlight-4" id="wrappedStanding">0</div>
                     <div class="stat-unit">hours</div>
@@ -566,6 +598,7 @@
                 totalSteps: 0,
                 stepsByDay: {},
                 totalDistance: 0,
+                heartRates: [],
                 totalExercise: 0,
                 totalCalories: 0,
                 totalFlights: 0,
@@ -574,7 +607,9 @@
                 sleepAsleep: 0,
                 recordsProcessed: 0,
                 recordsFound: 0
-            }
+            },
+            userAge: null,
+            userGender: 'male'
         };
 
         // View management
@@ -634,6 +669,7 @@
                 totalSteps: 0,
                 stepsByDay: {},
                 totalDistance: 0,
+                heartRates: [],
                 totalExercise: 0,
                 totalCalories: 0,
                 totalFlights: 0,
@@ -721,6 +757,9 @@
                 case 'DistanceWalkingRunning':
                     state.stats.totalDistance += numValue;
                     break;
+                case 'HeartRate':
+                    state.stats.heartRates.push(numValue);
+                    break;
                 case 'AppleExerciseTime':
                     state.stats.totalExercise += numValue;
                     break;
@@ -775,9 +814,54 @@
             URL.revokeObjectURL(url);
         }
 
+        // Calculate fitness age
+        function calculateFitnessAge(age, gender, heartRates) {
+            if (!age || heartRates.length === 0) return null;
+
+            // Calculate max heart rate: HRmax = 208 - (0.7 × age)
+            const hrMax = 208 - (0.7 * age);
+
+            // Calculate resting heart rate (10th percentile)
+            const sortedHR = heartRates.slice().sort((a, b) => a - b);
+            const hrRest = sortedHR[Math.floor(sortedHR.length * 0.1)];
+
+            // Calculate VO2 max: VO2max ≈ (HRmax ÷ HRrest) × 15.3
+            const vo2Max = (hrMax / hrRest) * 15.3;
+
+            // Average VO2 max by age and gender
+            const vo2MaxAverages = {
+                male: {
+                    20: 47, 30: 43, 40: 39, 50: 35, 60: 32, 70: 30
+                },
+                female: {
+                    20: 41, 30: 38, 40: 35, 50: 31, 60: 28, 70: 26
+                }
+            };
+
+            // Get average VO2 max for age group
+            const ageGroup = Math.floor(age / 10) * 10;
+            const avgVO2 = vo2MaxAverages[gender][ageGroup] ||
+                          (gender === 'male' ? 35 : 31);
+
+            // Calculate fitness age: Fitness Age = Age - 0.2 × (VO2max - Average VO2max)
+            const fitnessAge = Math.round(age - 0.2 * (vo2Max - avgVO2));
+
+            return {
+                fitnessAge: fitnessAge,
+                vo2Max: vo2Max.toFixed(1),
+                difference: age - fitnessAge
+            };
+        }
+
         // Show wrapped view with stats
         function showWrapped() {
             const stats = state.stats;
+
+            // Get user age and gender
+            const ageInput = document.getElementById('userAge').value;
+            const genderInput = document.getElementById('userGender').value;
+            state.userAge = ageInput ? parseInt(ageInput) : null;
+            state.userGender = genderInput;
 
             // Calculate derived stats
             const totalStepsM = (stats.totalSteps / 1000000).toFixed(2);
@@ -791,6 +875,18 @@
             const flightsClimbed = Math.round(stats.totalFlights);
             const standingHours = Math.round(stats.totalStandTime / 60);
 
+            // Calculate Burj Khalifa comparison (163 flights from bottom to top)
+            const burjKhalifaTrips = (flightsClimbed / 163).toFixed(1);
+            const burjComparison = burjKhalifaTrips >= 1
+                ? `That's climbing the Burj Khalifa ${burjKhalifaTrips}x!`
+                : `${Math.round(burjKhalifaTrips * 100)}% of the Burj Khalifa`;
+
+            // Calculate fitness age if age provided
+            let fitnessAgeData = null;
+            if (state.userAge && stats.heartRates.length > 0) {
+                fitnessAgeData = calculateFitnessAge(state.userAge, state.userGender, stats.heartRates);
+            }
+
             // Update wrapped view
             document.getElementById('wrappedSteps').textContent = totalStepsM + 'M';
             document.getElementById('wrappedMiles').textContent = totalMiles.toLocaleString();
@@ -801,7 +897,29 @@
             document.getElementById('wrappedCalories').textContent = caloriesK;
             document.getElementById('wrappedBestDay').textContent = maxDailySteps.toLocaleString();
             document.getElementById('wrappedFlights').textContent = flightsClimbed.toLocaleString();
+            document.getElementById('burjKhalifaComparison').textContent = burjComparison;
             document.getElementById('wrappedStanding').textContent = standingHours.toLocaleString();
+
+            // Show/hide fitness age vs standing card
+            if (fitnessAgeData) {
+                document.getElementById('fitnessAgeCard').style.display = 'flex';
+                document.getElementById('standingCard').style.display = 'none';
+                document.getElementById('wrappedFitnessAge').textContent = fitnessAgeData.fitnessAge;
+
+                const diff = fitnessAgeData.difference;
+                let message = '';
+                if (diff > 0) {
+                    message = `${diff} years younger!`;
+                } else if (diff < 0) {
+                    message = `${Math.abs(diff)} years older`;
+                } else {
+                    message = 'Right on target!';
+                }
+                document.getElementById('fitnessAgeMessage').textContent = message;
+            } else {
+                document.getElementById('fitnessAgeCard').style.display = 'none';
+                document.getElementById('standingCard').style.display = 'flex';
+            }
 
             // Prepare and render charts
             prepareChartsData();
