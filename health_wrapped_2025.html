@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1080, height=1920">
+    <title>Apple Health Wrapped 2025</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            width: 1080px;
+            height: 1920px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            padding: 80px 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .year {
+            font-size: 120px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00f5a0 0%, #00d9f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -3px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 42px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            gap: 30px;
+            flex: 1;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 40px 50px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #00f5a0, #00d9f5, #a537fd, #ff6b6b);
+        }
+
+        .stat-label {
+            font-size: 32px;
+            font-weight: 600;
+            color: #a0a0a0;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 72px;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-unit {
+            font-size: 36px;
+            font-weight: 600;
+            color: #00f5a0;
+        }
+
+        .highlight-1 { color: #00f5a0; }
+        .highlight-2 { color: #00d9f5; }
+        .highlight-3 { color: #a537fd; }
+        .highlight-4 { color: #ff6b6b; }
+        .highlight-5 { color: #ffd93d; }
+
+        .mega-stat {
+            text-align: center;
+            padding: 60px 50px;
+        }
+
+        .mega-stat .stat-value {
+            font-size: 140px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .double-stat {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .divider {
+            width: 2px;
+            height: 80%;
+            background: linear-gradient(180deg, transparent, #00f5a0, transparent);
+            margin: 0 auto;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-text {
+            font-size: 28px;
+            color: #a0a0a0;
+            font-weight: 600;
+        }
+
+        .circle-decoration {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 245, 160, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .circle-1 { top: -200px; right: -200px; }
+        .circle-2 { bottom: -200px; left: -200px; background: radial-gradient(circle, rgba(165, 55, 253, 0.1) 0%, transparent 70%); }
+    </style>
+</head>
+<body>
+    <div class="circle-decoration circle-1"></div>
+    <div class="circle-decoration circle-2"></div>
+
+    <div class="container">
+        <div class="header">
+            <div class="year">2025</div>
+            <div class="subtitle">HEALTH WRAPPED</div>
+        </div>
+
+        <div class="stats-grid">
+            <!-- Mega Steps -->
+            <div class="stat-card mega-stat">
+                <div class="stat-label">Total Steps</div>
+                <div class="stat-value">5.29M</div>
+                <div class="stat-unit">That's to the moon and back!</div>
+            </div>
+
+            <!-- Distance -->
+            <div class="stat-card">
+                <div class="stat-label">Distance Traveled</div>
+                <div class="stat-value highlight-2">2,726 <span class="stat-unit">miles</span></div>
+                <div class="stat-unit">= 4,386 km | Los Angeles to New York twice!</div>
+            </div>
+
+            <!-- Heart Rate -->
+            <div class="stat-card double-stat">
+                <div>
+                    <div class="stat-label">Avg Heart Rate</div>
+                    <div class="stat-value highlight-3">90 <span class="stat-unit">bpm</span></div>
+                </div>
+                <div>
+                    <div class="stat-label">Peak Heart Rate</div>
+                    <div class="stat-value highlight-4">164 <span class="stat-unit">bpm</span></div>
+                </div>
+            </div>
+
+            <!-- Daily Average -->
+            <div class="stat-card">
+                <div class="stat-label">Average Daily Steps</div>
+                <div class="stat-value highlight-5">14,499</div>
+                <div class="stat-unit">Above the recommended 10,000!</div>
+            </div>
+
+            <!-- Exercise & Calories -->
+            <div class="stat-card double-stat">
+                <div>
+                    <div class="stat-label">Exercise Time</div>
+                    <div class="stat-value highlight-1">317 <span class="stat-unit">hrs</span></div>
+                </div>
+                <div>
+                    <div class="stat-label">Calories Burned</div>
+                    <div class="stat-value highlight-2">163K</div>
+                </div>
+            </div>
+
+            <!-- Record Day -->
+            <div class="stat-card">
+                <div class="stat-label">Your Best Day</div>
+                <div class="stat-value highlight-3">37,949</div>
+                <div class="stat-unit">steps in a single day</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-text">365 days of movement • Every heartbeat counted</div>
+        </div>
+    </div>
+</body>
+</html>
